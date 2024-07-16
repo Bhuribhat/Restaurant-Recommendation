@@ -1,6 +1,6 @@
 # `Banthat Thong` Restaurant Recommendation
 
-`Tools:` LangChain, FastAPI, Chroma, and OpenAI
+`Tools:` LangChain, FastAPI, Chroma, FAISS, Huggingface, and OpenAI
 
 ## Setup Environment in `.env` File
 
@@ -11,7 +11,7 @@ HUGGINGFACE_API_KEY="HUGGINGFACE_API_KEY"
 
 ## Create Conda Environment
 
-```
+```bash
 # Create & Activate environment
 $ conda create -n llm-inference python=3.9
 $ conda activate llm-inference

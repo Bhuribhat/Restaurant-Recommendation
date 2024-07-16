@@ -81,6 +81,15 @@ def embed_database(
     return vectordb
 
 
-# TODO
-def parse_source_document(source_docs):
-    pass
+def parse_source_document(source_docs, n_chunks=1):
+    if source_docs is not None:
+        contents = []
+        page_count = 0
+        for page in source_docs:
+            if page_count < n_chunks:
+                contents.append(page.page_content)
+                page_count += 1
+        result = "\n\n".join(contents)
+        return result
+    else:
+        return ""
