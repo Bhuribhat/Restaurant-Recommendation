@@ -1,6 +1,8 @@
 .chroma/
 vector_db/
+__pycache__
 
-presentation_slide.pdf
+.env
 
-documents/
+# Temp file
+test.py

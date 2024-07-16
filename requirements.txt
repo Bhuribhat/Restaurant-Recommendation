@@ -1,0 +1,13 @@
+# Load .env file
+python-dotenv
+
+# FastAPI
+fastapi
+uvicorn
+jinja2
+pydantic
+
+# Generative AI
+langchain
+langchain-openai
+langchain-chroma
