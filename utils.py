@@ -21,6 +21,7 @@ def read_file(file_path: str) -> list[Document]:
     return knowledges
 
 
+# Load Embedding Model
 def load_embedding_model(embedding_model_name):
     if torch.cuda.is_available():
         device_type = "cuda"
@@ -34,6 +35,7 @@ def load_embedding_model(embedding_model_name):
     return embeddings
 
 
+# Load the contents of the documents to vertor database
 def embed_database(
     documents,
     persist_directory,
@@ -81,6 +83,7 @@ def embed_database(
     return vectordb
 
 
+# Post-processing the retrieved documents
 def parse_source_document(source_docs, n_chunks=1):
     if source_docs is not None:
         contents = []
