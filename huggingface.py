@@ -2,6 +2,7 @@ import os
 import requests
 from utils import read_file
 from utils import embed_database
+from utils import get_weather_info
 from utils import parse_source_document
 from dotenv import load_dotenv
 
@@ -20,11 +21,14 @@ headers = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
 # Prompt Template
 prompt = """
 You are a restaurant recommendation expert at บรรทัดทอง.
-Use the contents provided in the knowledge section to answer the question.
+Use the contents provided in the knowledge section to answer the question, and also inform user about the rain.
 Please provide a short and concise response.
 Regardless of the language of the question, you must answer in Thai.
 
 Question:
+{}
+
+Rain Information:
 {}
 
 Knowledge:
@@ -50,14 +54,17 @@ def inference_huggingface(question: str, model_name: str=None):
     retrieved_docs = retriever.get_relevant_documents(question)
     retrieved_docs = parse_source_document(retrieved_docs)
 
+    # Get rain information
+    rain_info = get_weather_info()
+
     # Get the response (Default model is phi)
     if model_name in [llama, phi]:
         output = query({
-            "inputs": prompt.format(question, retrieved_docs),
+            "inputs": prompt.format(question, retrieved_docs, rain_info),
         }, model_name)
     elif model_name is None:
         output = query({
-            "inputs": prompt.format(question, retrieved_docs),
+            "inputs": prompt.format(question, retrieved_docs, rain_info),
         }, model_name=phi)
 
     # print(len(output), list(output[0].keys()))

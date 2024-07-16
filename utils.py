@@ -1,11 +1,13 @@
 import os 
 import torch
+import requests
 
+from langchain.vectorstores import FAISS
+from langchain.vectorstores import Chroma
 from langchain.docstore.document import Document
 from langchain.document_loaders import TextLoader
 from langchain.text_splitter import TokenTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import Chroma, FAISS
 
 
 # Indexing and splitting the contents of the documents
@@ -84,7 +86,7 @@ def embed_database(
 
 
 # Post-processing the retrieved documents
-def parse_source_document(source_docs, n_chunks=1):
+def parse_source_document(source_docs, n_chunks: int=1) -> str:
     if source_docs is not None:
         contents = []
         page_count = 0
@@ -96,3 +98,35 @@ def parse_source_document(source_docs, n_chunks=1):
         return result
     else:
         return ""
+
+
+# Extract weather information at Banthat Thong Location
+def get_weather_info():
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": 13.74,
+        "longitude": 100.52,
+        "current": "temperature_2m,wind_speed_10m,precipitation"
+    }
+
+    # Make a GET request to the API
+    response = requests.get(url, params=params)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        data = response.json()
+
+        # Extract precipitation value
+        precipitation = data.get('current', {}).get('precipitation', None)
+
+        # Determine if rain is about to fall
+        if precipitation is not None:
+            if precipitation > 0:
+                return "Rain is about to fall."
+            else:
+                return "No rain is expected soon."
+        else:
+            return "Precipitation data not available."
+    else:
+        print(f"Failed to retrieve data. Status code: {response.status_code}")
+        return None

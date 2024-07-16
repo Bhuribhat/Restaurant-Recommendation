@@ -1,5 +1,7 @@
 import os 
 from dotenv import load_dotenv
+from utils import get_weather_info
+from utils import embed_database
 from utils import read_file
 
 from langchain.vectorstores import Chroma
@@ -14,10 +16,14 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 # Prompt Template
-prompt = """You're a restaurant recommendation expert at บรรทัดทอง. 
-No matter what the language of question you must answer in Thai.
+prompt = """You are a restaurant recommendation expert at บรรทัดทอง.
+Use the provided contents to answer the question, and also inform user about the rain.
+Please provide a short and concise response.
+Regardless of the language of the question, you must answer in Thai.
 
-Follow Up Input: {question}"""
+Rain Information: {rain_info}
+
+Question: {question}"""
 
 
 # Load the contents of the documents to vertor database
@@ -32,6 +38,7 @@ def create_vectordb(knowledges: list[Document], file_path: str, load_from_file: 
 
 # Retrieve information and inference LLM using RAG
 def inference_gpt(message: str) -> str:
+    rain_info = get_weather_info()
     knowledges = read_file('./documents')
     vectorstore = create_vectordb(
         knowledges,
@@ -39,9 +46,9 @@ def inference_gpt(message: str) -> str:
         load_from_file=True
     )
 
-    # Load QA model
-    prompt_template = PromptTemplate.from_template(prompt)
-    chat = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-3.5-turbo-16k") 
+    # Load the GPT model
+    prompt_template = PromptTemplate.from_template(prompt.format(rain_info=rain_info))
+    chat = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-3.5-turbo-0125") 
 
     # Create chain for question answering
     retriever = vectorstore.as_retriever()
@@ -55,3 +62,9 @@ def inference_gpt(message: str) -> str:
     response = conversation(message)
     print(response)
     return response["answer"]
+
+
+if __name__ == '__main__':
+    message = input("Enter a message: ").strip()
+    output = inference_gpt(message)
+    print(output)
