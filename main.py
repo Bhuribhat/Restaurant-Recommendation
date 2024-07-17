@@ -1,4 +1,5 @@
 import streamlit as st
+from utils import get_rain_info
 from openai import inference_gpt
 from huggingface import inference_huggingface
 
@@ -29,3 +30,6 @@ if prompt:
 
     with st.expander('Retrived Documents'): 
         st.info(retrieved_docs)
+
+    with st.expander('Weather Information'): 
+        st.info(get_rain_info())
