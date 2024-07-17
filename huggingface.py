@@ -2,8 +2,10 @@ import os
 import requests
 from utils import read_file
 from utils import embed_database
-from utils import get_weather_info
+from utils import get_rain_info
 from utils import parse_source_document
+from prompt import qa_prompt
+from prompt import text_gen_prompt
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -13,27 +15,12 @@ HUGGINGFACE_API_KEY = os.getenv('HUGGINGFACE_API_KEY')
 # Model's Name
 llama = "meta-llama/Meta-Llama-3-8B"
 phi = "microsoft/Phi-3-mini-4k-instruct"
+roberta = "deepset/roberta-base-squad2"
+mt5 = "google/mt5-small"
 
 # Inference Endpoint
 API_URL = "https://api-inference.huggingface.co/models"
 headers = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
-
-# Prompt Template
-prompt = """
-You are a restaurant recommendation expert at บรรทัดทอง.
-Use the contents provided in the knowledge section to answer the question, and also inform user about the rain.
-Please provide a short and concise response.
-Regardless of the language of the question, you must answer in Thai.
-
-Question:
-{}
-
-Rain Information:
-{}
-
-Knowledge:
-{}
-"""
 
 
 # Send payload to API Inference Endpoint
@@ -55,20 +42,35 @@ def inference_huggingface(question: str, model_name: str=None):
     retrieved_docs = parse_source_document(retrieved_docs)
 
     # Get rain information
-    rain_info = get_weather_info()
+    rain_info = get_rain_info()
 
-    # Get the response (Default model is phi)
-    if model_name in [llama, phi]:
+    # Get the response (Default model is mt5)
+    if model_name is None:
+        model_name = mt5
+
+    # Question-Answering Model
+    if model_name == roberta:
+        input_prompt = qa_prompt.format(question, rain_info)
         output = query({
-            "inputs": prompt.format(question, retrieved_docs, rain_info),
+            "inputs": {
+                "question": input_prompt,
+                "context": retrieved_docs,
+            }
         }, model_name)
-    elif model_name is None:
-        output = query({
-            "inputs": prompt.format(question, retrieved_docs, rain_info),
-        }, model_name=phi)
 
-    # print(len(output), list(output[0].keys()))
-    return output[0]['generated_text']
+    # Text-Completion Model
+    elif model_name in [llama, phi, mt5]:
+        input_prompt = text_gen_prompt.format(question, rain_info, retrieved_docs)
+        input_length = len(input_prompt)
+        output = query({
+            "inputs": input_prompt,
+        }, model_name)
+
+    # Return response text and retrived documents
+    if 'error' in output:
+        return output['error'], 'Error occurs'
+    else:
+        return output['answer'] if model_name == roberta else output[0]['generated_text'][input_length:], retrieved_docs
 
 
 if __name__ == '__main__':

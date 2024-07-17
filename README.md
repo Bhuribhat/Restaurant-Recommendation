@@ -25,7 +25,7 @@ This section provides instructions on how to integrate Hugging Face models for g
 
 We use inference endpoint https://api-inference.huggingface.co/models to create a conversational AI that recommends restaurants. The model uses a predefined prompt template to ensure responses are concise and in Thai.
 
-`Models:` Meta-Llama-3-8B, roberta-base-squad2, Phi-3-mini-4k-instruct
+`Models:` Meta-Llama-3-8B, roberta-base-squad2, Phi-3-mini-4k-instruct, google/mt5-small
 
 ### Define the Prompt Template
 
@@ -47,6 +47,7 @@ Question: {question}"""
 This function uses the Hugging Face inference endpoint to generate responses based on the input message, retrived documents, and rain information.
 
 ```py
+# Retrieve information and inference LLM using RAG
 def inference_huggingface(question: str, model_name: str=None):
     persist_directory = './vector_db'
     knowledges = read_file('./documents')
@@ -60,30 +61,33 @@ def inference_huggingface(question: str, model_name: str=None):
     # Get rain information
     rain_info = get_rain_info()
 
-    # Get the response (Default model is roberta)
+    # Get the response (Default model is mt5)
     if model_name is None:
-        model_name = roberta
+        model_name = mt5
 
     # Question-Answering Model
     if model_name == roberta:
+        input_prompt = qa_prompt.format(question, rain_info)
         output = query({
             "inputs": {
-                "question": qa_prompt.format(question, rain_info),
+                "question": input_prompt,
                 "context": retrieved_docs,
             }
         }, model_name)
 
     # Text-Completion Model
-    elif model_name in [llama, phi]:
+    elif model_name in [llama, phi, mt5]:
+        input_prompt = text_gen_prompt.format(question, rain_info, retrieved_docs)
+        input_length = len(input_prompt)
         output = query({
-            "inputs": text_gen_prompt.format(question, rain_info, retrieved_docs),
+            "inputs": input_prompt,
         }, model_name)
 
     # Return response text and retrived documents
     if 'error' in output:
         return output['error'], 'Error occurs'
     else:
-        return output['answer'] if model_name == roberta else output[0]['generated_text'], retrieved_docs
+        return output['answer'] if model_name == roberta else output[0]['generated_text'][input_length:], retrieved_docs
 ```
 
 ## External API Usage
@@ -172,7 +176,3 @@ $ pip install -r requirements.txt
 ```bash
 streamlit run main.py
 ```
-
-<!-- TODO find new model for better QA -->
-<!-- https://github.com/Bhuribhat/Programming-Project/blob/main/Question_Answering.ipynb -->
-<!-- https://docs.google.com/document/d/1qlnm3tsF_WjCp8iESiTX3Ttdon2ZG11bvBhE3YUhW4s/edit -->   

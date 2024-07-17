@@ -100,8 +100,8 @@ def parse_source_document(source_docs, n_chunks: int=1) -> str:
         return ""
 
 
-# Extract weather information at Banthat Thong Location
-def get_weather_info():
+# Extract rain information at Banthat Thong Location from https://open-meteo.com/
+def get_rain_info():
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": 13.74,
