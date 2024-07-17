@@ -14,3 +14,9 @@ langchain
 langchain-openai
 langchain-chroma
 langchain-faiss
+
+# https://github.com/langchain-ai/langchain/issues/12954#issuecomment-1797110036
+openai==0.28.1
+
+# UX/UI
+streamlit
